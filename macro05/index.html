@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>macro assignment #05</title>
+    <style>
+        body {
+            background-image: url(images/corkboard.jpg);
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+        }
+
+        h1 {
+            color: white;
+        }
+
+        #filter {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 5px;
+            margin: 10px;
+            border: 1px solid black;
+        }
+
+        #add_btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            margin: 50px;
+        }
+
+        #add_btn:hover {
+            transform: scale(2);
+        }
+
+        #info_panel {
+            width: 400px;
+            height: 300px;
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid black;
+            background-color: white;
+            color: black;
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateY(-50%);
+            transform: translateX(-50%);
+        }
+
+        .addToDoPanel {
+            display: none;
+            position: absolute;
+            top: 10%;
+            left: 50%;
+            transform: translateY(-50%);
+            transform: translateX(-50%);
+            width: 400px;
+            height: 400px;
+            padding: 10px;
+            margin: 20px;
+            border: 1px solid black;
+            align-items: center;
+            background-color: white;
+        }
+
+        .form_field, #warning {
+            margin: 20px;
+        }
+
+        #warning {
+            background-color: red;
+            width: 350px;
+            border: 1px solid black;
+            display: none;
+        }
+
+        textarea {
+            resize: none;
+            height: 100px;
+            width: 350px;
+        }
+
+        input {
+            width: 350px;
+        }
+
+        .newItem {
+            width: 200px;
+            height: 200px;
+            background-color: wheat;
+            display: none;
+            margin: 10px;
+            display: flex;
+            position: relative;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #activities_container {
+            display: flex;
+            flex-wrap: wrap;
+            box-sizing: border-box;
+        }
+
+        .summer {
+            background-color: lightgreen;
+        }
+
+        .spring {
+            background-color: burlywood;
+        }
+
+        .winter {
+            background-color: lightskyblue;
+        }
+
+        .fall {
+            background-color: lightcoral;
+        }
+
+        .newItem .deleteButton {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+        }
+    </style>
+  </head>
+  <body>
+    <h1>Seasonal To-Do List</h1>
+
+    <select name="filter" id="filter">
+        <option value="summer">summer</option>
+        <option value="spring">spring</option>
+        <option value="winter">winter</option>
+        <option value="fall">fall</option>
+        <option value="default" selected>show all seasons</option>
+    </select>
+
+    <img id="add_btn" src="images/add_button.png" alt="add button">
+
+    <div id="activities_container"></div>
+
+    <div class="addToDoPanel">
+        <h2 style="text-align: center;">add a new item</h2>
+
+        <div id="warning">
+            please fill out the form!
+        </div>
+
+        <div class="form_field">
+            <label for="title">title:</label> <br>
+            <input type="text" name="title" id="title" required/>
+        </div>
+        <div class="form_field">
+            <label for="season">category:</label> <br>
+            <select name="season" id="season" required>
+                <option value="summer">summer</option>
+                <option value="spring">spring</option>
+                <option value="winter">winter</option>
+                <option value="fall">fall</option>
+                <option value="default" selected>show all seasons</option>
+            </select>
+        </div>
+        <div class="form_field">
+            <label for="description">description:</label> <br>
+            <textarea name="description" id="description" required></textarea>
+        </div>
+        <div class="form_field">
+            <button type="submit" id="save">save!</button>
+            <button type="reset" id="cancel">cancel!</button>
+        </div>
+        
+    </div>
+  </body>
+
+  <script>
+    let activitiesCont = document.getElementById("activities_container");
+    let addBtn = document.getElementById("add_btn");
+    let addToDoPanel = document.querySelector(".addToDoPanel");
+
+    //cancel button
+    function cancelBtn() {
+        addToDoPanel.style.display = "none";
+        document.getElementById("warning").style.display = "none";
+        clearFormFields();
+    }
+
+    //event listeners
+    addBtn.addEventListener("click", () => {
+        addToDoPanel.style.display = "block";
+    });
+    document.getElementById("cancel").addEventListener("click", cancelBtn);
+
+    //filtering
+    
+    function filterItems(season) {
+        let items = document.querySelectorAll('.newItem');
+        items.forEach(item => {
+            if (season === 'default' || item.classList.contains(season)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    //event listener for filter dropdown menu
+    document.getElementById("filter").addEventListener("change", function() {
+        let selectedSeason = this.value;
+        filterItems(selectedSeason);
+    });
+
+    //revert the filter to "show all"
+    function revertFilter() {
+        let filterDropdown = document.getElementById("filter");
+        filterDropdown.value = "default";
+        filterItems("default");
+    }
+
+    //create new item / to do lists
+    function createNewItem(title, season, description) {
+        let newItem = document.createElement('div');
+        let infoPanel = document.getElementById("info_panel");
+        newItem.className = 'newItem';
+        newItem.innerHTML = `<h3 class="item_title">${title}</h3>`;
+            //adjsut background color 
+            switch(season) {
+            case 'summer':
+                newItem.classList.add('summer');
+                break;
+            case 'spring':
+                newItem.classList.add('spring');
+                break;
+            case 'winter':
+                newItem.classList.add('winter');
+                break;
+            case 'fall':
+                newItem.classList.add('fall');
+                break;
+            default:
+                break;
+        }
+        //Add delete button
+        let deleteButton = document.createElement('img');
+        deleteButton.src = 'images/delete_button.png';
+        deleteButton.alt = 'delete button';
+        deleteButton.className = 'deleteButton';
+        deleteButton.style.display = 'none';
+        deleteButton.addEventListener('click', () => {
+            event.stopPropagation(); 
+            newItem.remove(); //remove the toDoItem when clicked on del
+            if (window.infoPanel) {
+                window.infoPanel.remove();
+            }
+        });
+        newItem.appendChild(deleteButton);
+        //delete button visible on hover
+        newItem.addEventListener('mouseenter', () => {
+            deleteButton.style.display = 'inline';
+        });
+        newItem.addEventListener('mouseleave', () => {
+            deleteButton.style.display = 'none';
+        });
+
+        let createdAt = new Date();
+        newItem.createdAt = createdAt;
+        newItem.lastAccessed = createdAt;
+
+        newItem.addEventListener("click", () => {
+            newItem.lastAccessed = new Date();
+            displayInfoPanel(newItem, title, season, description, createdAt, newItem.lastAccessed);
+        });
+        //
+        activitiesCont.appendChild(newItem);
+        newItem.style.display = "block";
+        revertFilter();
+
+        //phase 2
+        let moveLeftButton = document.createElement('button');
+        moveLeftButton.innerText = '<';
+        moveLeftButton.className = 'moveLeftButton';
+        moveLeftButton.addEventListener('click', function() {
+            event.stopPropagation();
+            moveItemLeft(newItem);
+        });
+
+        //create move right button
+        let moveRightButton = document.createElement('button');
+        moveRightButton.innerText = '>';
+        moveRightButton.className = 'moveRightButton';
+        moveRightButton.addEventListener('click', function() {
+            event.stopPropagation();
+            moveItemRight(newItem);
+        });
+
+        //append buttons to newItem
+        newItem.appendChild(moveLeftButton);
+        newItem.appendChild(moveRightButton);
+
+        //hide left button for first item
+        if (!newItem.previousElementSibling) {
+            moveLeftButton.style.display = 'none';
+        }
+
+        //hide right button for last item
+        if (!newItem.nextElementSibling) {
+            moveRightButton.style.display = 'none';
+        }
+    }
+
+    //second phase
+    //move item left
+    function moveItemLeft(item) {
+        let prevItem = item.previousElementSibling;
+        if (prevItem) {
+            item.parentNode.insertBefore(item, prevItem);
+            updateButtonVisibility(item);
+        }
+    }
+
+    //move item right
+    function moveItemRight(item) {
+        let nextItem = item.nextElementSibling;
+        if (nextItem) {
+            item.parentNode.insertBefore(nextItem, item);
+            updateButtonVisibility(item);
+        }
+    }
+
+    //function to update button visibility based on item position
+    function updateButtonVisibility(item) {
+        let moveLeftButton = item.querySelector('.moveLeftButton');
+        let moveRightButton = item.querySelector('.moveRightButton');
+        moveLeftButton.style.display = item.previousElementSibling ? 'inline-block' : 'none';
+        moveRightButton.style.display = item.nextElementSibling ? 'inline-block' : 'none';
+    }
+
+    //let infoPanel;
+    function displayInfoPanel(newItem, title, season, description, createdAt, lastAccessed) {
+        window.infoPanel = document.createElement("div");
+        //infoPanel = document.createElement("div");
+        window.infoPanel.setAttribute("id", "info_panel");
+        window.infoPanel.innerHTML = `
+            <h2 class="item_title">${title}</h2>
+            <p>season: ${season}</p>
+            <p>description: ${description}</p>
+            <hr>
+            <p>created: ${createdAt.toLocaleString()}</p>
+            <p>last accessed: ${lastAccessed.toLocaleString()}</p>
+            <button class="cancelButton">close!</button>
+        `;
+
+        document.body.appendChild(window.infoPanel);
+
+        let cancelButton = infoPanel.querySelector(".cancelButton");
+        cancelButton.addEventListener("click", () => {
+            window.infoPanel.style.display = "none";
+        });
+    }
+
+    //clear/restart 
+    function clearFormFields() {
+        document.getElementById("title").value = "";
+        document.getElementById("description").value = "";
+        document.getElementById("season").value = "default";
+    }
+
+    document.getElementById("save").addEventListener("click", () => {
+        let title = document.getElementById("title").value;
+        let season = document.getElementById("season").value;
+        let description = document.getElementById("description").value;
+
+        if (!title || !season || !description || season === "default") {
+            document.getElementById("warning").style.display = "block";
+        } else {
+            document.getElementById("warning").style.display = "none";
+            cancelBtn();
+            createNewItem(title, season, description);
+        }
+    });
+  </script>
+</html>

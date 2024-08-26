@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Chat Room!</title>
+        <script src="helpers.js"></script>
+        <style>
+           @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap');
+            body {
+                font-family: "IBM Plex Mono";
+                background-color: #90dcff;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            .container {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                background-color: #ffd76a;
+                max-width: 80vw;
+                max-height: 150vh;
+                margin: 50px auto;
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 10px 10px 30px rgba(1, 2, 123, 10);
+            }
+
+            #chatHistory {
+                width: 100%;
+                height: 50vh;
+                box-sizing: border-box;
+                border: 5px solid #01027b;
+                border-radius: 20px;
+                padding: 10px;
+                background-color: #95bedd;
+                overflow: scroll;
+                text-wrap: pretty;
+            }
+
+            #roomSelect {
+                font-family: 'Courier New', Courier, monospace;
+                font-weight: 200;
+                margin: 10px;
+                text-align: center;
+                border: 1px solid #ec833f;
+                background-color:  #ffd76a;
+                border-radius: 10px;
+            }
+
+            #usernameScreen, #messageScreen {
+                margin: 0;
+                margin-bottom: 20px;
+            }
+
+            .error {
+                display: none;
+                background-color: red;
+                color: white;
+                padding: 5px;
+                border-radius: 10px;
+                text-align: center;
+            }
+
+            input[type="text"], button {
+                padding: 10px;
+                margin-top: 10px;
+                border: 3px solid #01027b;
+                border-radius: 10px;
+                font-size: 16px;
+            }
+
+            button {
+                cursor: pointer;
+                background-color: #008b8b;
+                color: #fff;
+                border: none;
+            }
+
+            button:hover {
+                background-color: #01027b;
+            }
+
+            h2 {
+                font-size: 32px;
+                color: #008b8b;
+                margin-bottom: 2px;
+            }
+
+            #admin {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                text-decoration: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <!-- Enter Username Screen -->
+            <div id="usernameScreen">
+                <h2>@Let's Chat!</h2>
+                <input type="text" id="usernameInput" placeholder="Enter Username">
+                <button type="submit" id="usernameButton">Save!</button>
+                <p class="error">Enter Your Name!</p>
+            </div>
+            <!-- ChatRoom -->
+            <div id="chatScreen" style="display: none;">
+                <h2>@Let's Chat!</h2>
+                <!-- empty div for chatHistory -->
+                Choose A Chatroom:
+                <select id="roomSelect" onchange="selectRoom()">
+                    <option value="">Pick A Room</option>
+                    <option value="room1">Silly & Goofy</option>
+                    <option value="room2">Not-So-Silly-And-Goofy</option>
+                </select>
+                <div id="chatHistory"></div>
+                <input type="text" id="messageInput" placeholder="Start Typing..." maxlength="50">
+                <button type="submit" id="messageButton">Send!</button>
+                <p id="errorMsg" style="display: none;">Enter Something!</p>
+                <p id="errorMsg2" style="display: none;">Please Pick A Room!</p>
+            </div>
+        </div>
+        <a href="admin.html" id="admin">Admin Login</a>
+        <script>
+            //DOM References
+            let usernameScreen = document.getElementById("usernameScreen");
+            let chatScreen = document.getElementById("chatScreen");
+            let username = document.getElementById("usernameInput");
+            let messageInput = document.getElementById("messageInput");
+            let usernameButton = document.getElementById("usernameButton");
+            let messageButton = document.getElementById("messageButton");
+            let chatHistory = document.getElementById("chatHistory");
+            let errorMessage = document.querySelector(".error");
+            let errorMsg = document.getElementById("errorMsg");
+            let roomSelect = document.getElementById("roomSelect");
+
+            //Save nickname and hide it if input is valid
+            usernameButton.addEventListener("click", function() {
+                if (username.value.trim() === "") {
+                    errorMessage.style.display = "block";
+                }
+                else {
+                    usernameScreen.style.display = "none";
+                    chatScreen.style.display = "block";
+                    //call getChatMessages() to start the process of getting data from server
+                    getChatMessages();
+                }
+            });
+
+            //switching between different rooms
+            // function clearChatHistory() {
+            //     chatHistory.innerHTML = ""; // Clear the chat history
+            // }
+            function clearChatHistory() {
+                while (chatHistory.firstChild) {
+                    chatHistory.removeChild(chatHistory.firstChild);
+                }
+            }
+
+            let room_id;
+
+            const roomMap = {
+                '': 0,
+                'room1': 1,
+                'room2': 2,
+            };
+
+            function selectRoom() {
+                const selectedRoom = roomSelect.value;
+                room_id = roomMap[selectedRoom];
+                clearChatHistory();
+                errorMsg2.style.display = 'none';
+            }
+
+            // function selectRoom() {
+            //     const selectedRoom = roomSelect.value;
+            //     if (selectedRoom === "") {
+            //         room_id = 0;
+            //     }
+            //     else if (selectedRoom === 'room1') {
+            //         room_id = 1;
+            //     }
+            //     else if (selectedRoom === 'room2') {
+            //         room_id = 2;
+            //     }
+            //     clearChatHistory();
+            //     errorMsg2.style.display = 'none';
+            // }
+
+            //Create a boolean to track whether using is scrolling
+            let isUserScrolling = false;
+
+            //Scroll chat history to bottom
+            function scrollChatToBottom() {
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                //user is scrolling
+                if (isUserScrolling) {
+                    return;
+                }
+            }
+
+            //Event listener for scroll
+            chatHistory.addEventListener("scroll", function() {
+                // Update the scrolling status
+                isUserScrolling = chatHistory.scrollHeight - chatHistory.scrollTop !== chatHistory.clientHeight;
+                isUserScrolling = true;
+            });
+
+            //Get existing entries
+            function getChatMessages() {
+                //1) use the fetch API to grab the db file from the server
+                performFetch({
+                    method: 'GET',
+                    url: 'get_messages.php',
+                    data: { room_id: room_id },
+                    success: function(data, status) {
+                        console.log("Success, accessed data from the server.");
+                        //2) after file is retrieved, prase it into a JS array
+                        let arrayData = JSON.parse(data);
+
+                        //3) visit each element in the array and create
+                        //new DOM elements for each one
+                        for (let i = 0; i < arrayData.length; i++) {
+                            //see if we alr have a DOM elem with this ID
+                            //if so we dont wanna do anything
+                            if (!document.getElementById(arrayData[i]['id'])) {
+                                //create an entry div for this item
+                                createEntry(arrayData[i]['id'], arrayData[i]['name'], arrayData[i]['message'], arrayData[i]['room_id']);
+                            }
+                        }
+
+                        //in 2 seconds, do this again to get any new entries
+                        setTimeout(getChatMessages, 1000);
+                    },
+                    error: function(req, data, status) {
+                        console.log("Error, could not access file.");
+                        setTimeout(getChatMessages, 1000);
+                    }
+                })
+            }
+
+            function createEntry(id, name, msg, room_id) {
+                //create new 'div' on the page with this ID
+                let tempDiv = document.createElement('div');
+                tempDiv.id = id;
+                tempDiv.name = name;
+                tempDiv.room_id = room_id;
+
+                //create a 'p' tag for the message
+                let tempP = document.createElement('p');
+                let nameSpan = document.createElement('span');
+                nameSpan.style.color = '#008b8b';
+                nameSpan.style.fontWeight = 'bold';
+                nameSpan.textContent = name + ": ";
+                tempP.appendChild(nameSpan);
+                tempP.innerHTML += msg;
+                //tempP.innerHTML = name + ": " + msg;
+                tempDiv.appendChild(tempP);
+                chatHistory.appendChild(tempDiv);
+                scrollChatToBottom();
+                //append to chathistory
+                // chatHistory.appendChild(tempdDiv);
+                errorMsg.style.display = 'none';
+            }
+
+            //save a new entry
+            messageButton.addEventListener("click", () => {
+                let messageText = messageInput.value;
+                let usernameText = username.value;
+                if (messageText.trim() === "") {
+                    // errorMessage.style.display = "block";
+                    errorMsg.classList.add("error");
+                    errorMsg.style.display = 'block';
+                }
+                else if (roomSelect.value === "") {
+                    errorMsg2.classList.add("error");
+                    errorMsg2.style.display = 'block';
+                }
+                else {
+                    //make a fetch
+                    performFetch({
+                        method: 'POST',
+                        url: 'save_message.php',
+                        data: {
+                            message: messageText,
+                            name: usernameText,
+                            room_id: room_id
+                        },
+                        success: function(data, status) {
+                            console.log("Success! Received the following data from the server: ", data);
+                            createEntry(data, usernameText, messageText);
+                            scrollChatToBottom();
+                            //clear the message field
+                            messageInput.value = "";
+                        },
+                        error: function(req, data, status) {
+                            console.log("Reported Error!");
+                        }
+                    })
+                }
+            });
+        </script>
+    </body>
+</html>

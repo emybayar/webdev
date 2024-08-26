@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap');
+
+        body {
+            font-family: "IBM Plex Mono";
+            background-color: #008b8b;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #95bedd;
+            border: 3px solid #01027b;
+            border-radius: 10px;
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .formControl {
+            width: 50%;
+            height: 30px;
+            padding: 10px;
+            font-size: 14px;
+            border: 2px solid green;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+
+        button {
+            background-color: green;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #3e8e41;
+        }
+
+        #loginError {
+            background-color: red;
+            color: white;
+        }
+
+        #systemLogs {
+            word-break: break-all;
+            text-wrap: wrap;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Panel</h1>
+        <form id="loginForm">
+            Username:
+            <input type="text" id="username" name="username" class="formControl" placeholder="Enter Username" required><br><br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" class="formControl" placeholder="Enter Password"required><br><br>
+            <button type="submit">Login</button>
+            <p id="loginError" style="display: none;">Invalid Password or Username!</p>
+        </form>
+    
+        <div id="adminContent" style="display: none;">
+            <!-- Display System Usage Logs -->
+            <h2>System Usage Logs</h2>
+            <div id="systemLogs"></div>
+    
+            <!-- Button to Clear Chat Room -->
+            <button id="clearChatButton">Clear Chat Room</button>
+        </div>
+    </div>
+
+    <script src="helpers.js"></script>
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // prevent form submission
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            if (username === "pikachu" && password === "pokemon") {
+                document.getElementById("loginForm").style.display = 'none';
+                document.getElementById("adminContent").style.display = "block";
+                //Fetch and display system usage logs
+                fetchSystemUsageLogs();
+            } else {
+                loginError.style.display = 'block';
+            }
+        });
+
+        // Function to fetch and display system usage logs
+        function fetchSystemUsageLogs() {
+            performFetch({
+                method: "GET",
+                url: "system_logs.php",
+                success: function(data) {
+                    // Parse JSON data
+                    const logs = JSON.parse(data);
+                    // Display logs in a more human-readable format
+                    const systemLogsDiv = document.getElementById("systemLogs");
+                    systemLogsDiv.innerHTML = ""; // Clear previous content
+                    logs.forEach(log => {
+                        const logEntry = document.createElement("div");
+                        logEntry.innerHTML = `
+                            <p><strong>Name:</strong> ${log.name}</p>
+                            <p><strong>Timestamp:</strong> ${new Date(log.timestamp * 1000).toLocaleString()}</p>
+                            <p><strong>IP Address:</strong> ${log.ip_address}</p>
+                            <hr>
+                        `;
+                        systemLogsDiv.appendChild(logEntry);
+                    });
+                },
+                error: function(error) {
+                    console.error("Error fetching system logs:", error);
+                }
+            });
+        }
+        // function fetchSystemUsageLogs() {
+        //     performFetch({
+        //         method: "GET",
+        //         url: "system_logs.php",
+        //         success: function(data) {
+        //             // Display logs in the systemLogs div
+        //             document.getElementById("systemLogs").innerHTML = data;
+        //         },
+        //         error: function(error) {
+        //             console.error("Error fetching system logs:", error);
+        //         }
+        //     });
+        // }
+
+        // Function to clear chat room
+        document.getElementById("clearChatButton").addEventListener("click", function() {
+            if (confirm("Are you sure you want to clear the chat room?")) {
+                performFetch({
+                    method: "POST",
+                    url: "clear_chat.php",
+                    success: function(data) {
+                        alert("Chat room cleared successfully!");
+                    },
+                    error: function(error) {
+                        console.error("Error clearing chat room:", error);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

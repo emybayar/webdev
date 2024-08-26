@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>macro assignment #06</title>
+        <style>
+            body {
+                font-family: 'Courier New', Courier, monospace;
+                text-align: center;
+                background-color: black;
+                color: white;
+                font-size: 2rem;
+            }
+
+            .screen {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            button {
+                height: 50px;
+                width: 120px;
+                font-size: 30px;
+                font-family: 'Courier New', Courier, monospace;
+            }
+
+            #restart_button, #save_score_button {
+                height: 100px;
+                font-size: 15px;
+            }
+
+            .screen a {
+                position: fixed;
+                bottom: 0;
+                text-decoration: none;
+                font-size: 20px;
+            }
+
+            #game_board {
+                display: grid;
+                grid-template-columns: repeat(var(--cols), 1fr);
+                justify-items: center;
+                align-items: center;
+                grid-gap: 15px;
+            }
+
+            #player_name {
+                font-size: 20px;
+            }
+
+            .card {
+                display: inline-block;
+                height: 120px;
+                margin: 10px;
+                cursor: pointer;
+                object-fit: contain;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="gameSize">
+            <div id="start_screen" class="screen">
+                <h1>Memory Matching Madness!</h1>
+                <p>Play a fast-paced game of "memory" and try and beat your best time!</p>
+                <form>
+                    <input type="radio" id="easy" name="difficulty" value="easy" checked>
+                    <label for="easy">Easy Mode!</label><br>
+                    <input type="radio" id="medium" name="difficulty" value="medium">
+                    <label for="medium">Medium Mode!</label><br>
+                    <input type="radio" id="hard" name="difficulty" value="hard">
+                    <label for="hard">Hard Mode!</label>
+                </form>
+                <br>
+                <button id="start_btn">Start!</button>
+                <a href="https://www.flaticon.com/free-icons/pokemon" title="pokemon icons">Pokemon icons created by Those Icons - Flaticon</a>
+            </div>
+
+            <div id="play_screen" class="screen hidden">
+                <h1>Ready, Set, Match!</h1>
+                <p id="timer">Time: <span id="time_display">0</span>s</p>
+                <div id="game_board"></div>
+            </div>
+
+            <div id="game_over_screen" class="screen hidden">
+                <h1>Game Over!</h1>
+                <p>Your Time: <span id="time_display_over">0</span>s</p>
+                <p>Best Time: <span id="best_display">0</span></p>
+                <input type="text" id="player_name" placeholder="What's your name?">
+                <br>
+                <button id="save_score_button">Save Your New Best Score!</button>
+                <br>
+                <button id="restart_button">Play Again!</button>
+            </div>
+        </div>
+    </body>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        //access dom elements
+        const startScreen = document.getElementById("start_screen");
+        const startBtn = document.getElementById("start_btn");
+        const playScreen = document.getElementById("play_screen");
+        const gameBoard = document.getElementById("game_board");
+        const timeDisplay = document.getElementById("time_display");
+        const bestDisplay = document.getElementById("best_display");
+        const gameOverScreen = document.getElementById("game_over_screen");
+        const restartBtn = document.getElementById("restart_button");
+        const playerName = document.getElementById("player_name");
+        const saveScoreBtn = document.getElementById("save_score_button");
+        const timerCount = document.getElementById("timer");
+        const timeOver = document.getElementById("time_display_over");
+        let assets = [
+            'images/bullbasaur.png',
+            'images/mew.png',
+            'images/jigglypuff.png',
+            'images/pikachu.png',
+            'images/snorlax.png',
+            'images/squirtle.png',
+            'images/avatar_1.png',
+            'images/avatar_2.png',
+            'images/avatar_3.png',
+            'images/avatar_4.png',
+            'images/avatar_5.png',
+            'images/avatar_6.png',
+            'images/charmander.png',
+            'images/dratini.png',
+            'images/mankey.png'
+        ];
+
+        //testing logic -- clear localstorage
+        //localStorage.clear();
+
+        //set up variables
+        let timerInterval;
+        let timer = 0;
+        let score = localStorage.getItem("score");
+        let bestTime = localStorage.getItem("bestTime") || Infinity;
+        let cardsFlipped = [];
+        let cardsMatched = [];
+        let isProcessing = false;
+
+        //match vs fail audio add
+        const matchSound = new Audio("images/match.wav");
+        const failSound = new Audio("images/fail.wav");
+
+        //add event listeners
+        startBtn.addEventListener("click", startGame);
+        restartBtn.addEventListener("click", restartGame);
+        saveScoreBtn.addEventListener("click", saveScore);
+
+        //init game
+        function startGame() {
+            startScreen.classList.add("hidden");
+            playScreen.classList.remove("hidden");
+
+            const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+            const gridSizes = {
+                "easy": { rows: 3, cols: 4 },
+                "medium": { rows: 4, cols: 5 },
+                "hard": { rows: 5, cols: 6 }
+            };
+            const { rows, cols } = gridSizes[difficulty];
+            document.documentElement.style.setProperty('--cols', cols);
+
+            timer = 0;
+            timeDisplay.textContent = "0";
+            timerInterval = setInterval(updateTime, 1000);
+            cardsMatched = [];
+            createGameBoard(rows, cols);
+        }
+
+        function restartGame() {
+            gameOverScreen.classList.add("hidden");
+            Array.from(gameBoard.children).forEach(card => card.remove());
+            startScreen.classList.remove("hidden");
+        }
+
+        function saveScore() {
+            const playerNameValue = playerName.value.trim();
+            if (playerNameValue !== "") {
+                localStorage.setItem("score", playerNameValue);
+                playerName.style.display = "none";
+                saveScoreBtn.style.display = "none";
+            }
+        }
+
+        //handle timer -- inrement
+        function updateTime() {
+            timer++;
+            timeDisplay.textContent = timer;
+        }
+
+        function gameOver() {
+            gameOverScreen.classList.remove('hidden');
+            playScreen.classList.add("hidden");
+            clearInterval(timerInterval);
+            timeOver.textContent = timer;
+            bestTime = Math.min(bestTime, timer);
+            score = localStorage.getItem("score");
+            if (timer <= bestTime) {
+                bestDisplay.innerText = `${bestTime}s CONGRATS BESTIE! NEW HIGH SCORE! <3`;
+                playerName.style.display = "block";
+                saveScoreBtn.style.display = "block";
+            } else {
+                bestDisplay.innerText = `${bestTime}s by ${score}`;
+                playerName.style.display = "none";
+                saveScoreBtn.style.display = "none";
+            }
+            localStorage.setItem("bestTime", bestTime);
+        }
+
+        function flipCard() {
+            if (isProcessing || cardsFlipped.length > 1) return;
+
+            const card = this;
+            if (cardsMatched.includes(card)) return;
+
+            if (!cardsFlipped.includes(card)) {
+                card.src = card.dataset.flipped;
+                cardsFlipped.push(card);
+                if (cardsFlipped.length === 2) {
+                    setTimeout(checkIfMatch, 250);
+                    isProcessing = true;
+                }
+            }
+        }
+
+        function checkIfMatch() {
+            const [card1, card2] = cardsFlipped;
+            if (card1.dataset.flipped === card2.dataset.flipped) {
+                cardsFlipped = [];
+                card1.classList.remove("notFlipped");
+                card2.classList.remove("notFlipped");
+                cardsMatched.push(card1, card2);
+                matchSound.play();
+                if (document.querySelectorAll(".notFlipped").length === 0) {
+                    gameOver();
+                }
+            } else {
+                failSound.play();
+                setTimeout(() => {
+                    card1.src = "images/pokeball.png";
+                    card2.src = "images/pokeball.png";
+                    cardsFlipped = []; //restart
+                }, 250);
+            }
+            isProcessing = false;
+        }
+
+        //create gameBoard
+        function createGameBoard(rows, cols) {
+            const selectedAssets = assets.slice(0, rows * cols / 2);
+            const shuffledAssets = selectedAssets.concat(selectedAssets).sort(() => Math.random() - 0.5);
+            shuffledAssets.forEach((asset) => {
+                const card = document.createElement("img");
+                card.classList.add("card", "notFlipped");
+                card.src = "images/pokeball.png";
+                card.dataset.flipped = asset;
+                card.addEventListener('click', flipCard);
+                gameBoard.appendChild(card);
+            });
+            gameBoard.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        }
+    });
+
+    </script>
+</html>

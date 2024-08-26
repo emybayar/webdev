@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en-us">
+	<head>
+		<meta charset="utf-8">
+        <meta name="viewport" content="initial-scale=1">
+        <link rel="stylesheet" href="styles.css">
+		<title>Emy's Web Development Portfolio?</title>
+        <link rel="icon" type="image/x-icon" href="images/favicon.png">
+	</head>
+	<body>
+        <header>
+            <h1>Web | Development | Portfolio?</h1>
+        </header>
+
+        <main>
+            <h2 class="heading-center">EMY SAINBAYAR</h2>
+            <div class="icon-container">
+                <a href="micro06/micro06.php" class="icon-link" onmouseover="changeHeading('Micro Assignment 06')" onmouseout="resetHeading()">
+                    <img src="images/1.png" alt="icon1">
+                </a>
+                <a href="macro02/macro02.html" class="icon-link" id="macro02" onmouseover="changeHeading('Macro Assignment 02')" onmouseout="resetHeading()">
+                    <img src="images/2.png" alt="icon2">
+                </a>
+                <a href="macro03/index.html" class="icon-link" id="macro03" onmouseover="changeHeading('Macro Assignment 03')" onmouseout="resetHeading()">
+                    <img src="images/3.png" alt="icon3">
+                </a>
+                <a href="macro04/index.html" class="icon-link" id="macro04" onmouseover="changeHeading('Macro Assignment 04')" onmouseout="resetHeading()">
+                    <img src="images/4.png" alt="icon4">
+                </a>
+                <a href="macro05/index.html" class="icon-link" id="macro05" onmouseover="changeHeading('Macro Assignment 05')" onmouseout="resetHeading()">
+                    <img src="images/5.png" alt="icon5">
+                </a>
+                <a href="macro06/index.html" class="icon-link" id="macro06" onmouseover="changeHeading('Macro Assignment 06')" onmouseout="resetHeading()">
+                    <img src="images/6.png" alt="icon6">
+                </a>
+                <a href="macro07/index.php" class="icon-link" id="macro07" onmouseover="changeHeading('Macro Assignment 07')" onmouseout="resetHeading()">
+                    <img src="images/7.png" alt="icon7">
+                </a>
+                <a href="macro08/index.php" class="icon-link" id="macro08" onmouseover="changeHeading('Macro Assignment 08')" onmouseout="resetHeading()">
+                    <img src="images/8.png" alt="icon8">
+                </a>
+                <a href="macro09/index.html" class="icon-link" id="macro09" onmouseover="changeHeading('Macro Assignment 09')" onmouseout="resetHeading()">
+                    <img src="images/9.png" alt="icon9">
+                </a>
+                <a href="micro07/index.php" class="icon-link" id="macro10" onmouseover="changeHeading('Micro Assignment 7')" onmouseout="resetHeading()">
+                    <img src="images/10.png" alt="micro 07">
+                </a>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; EMY 2024 SPRING SEMESTER</p>
+        </footer>
+	</body>
+
+    <script>
+        let initialHeadingText = document.querySelector('.heading-center').textContent;
+
+        function changeHeading(newText) {
+            document.querySelector('.heading-center').textContent = newText;
+        }
+
+        function resetHeading() {
+            document.querySelector('.heading-center').textContent = initialHeadingText;
+        }
+    </script>
+</html>
